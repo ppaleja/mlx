@@ -282,3 +282,9 @@ if __name__ == "__main__":
     compare_filtered("topk --size 32768x128 --axis 1")
     compare_filtered("topk --size 128x128 --axis 0 --cpu")
     compare_filtered("topk --size 128x128 --axis 1 --cpu")
+
+    # Searchsorted variants
+    compare_filtered("searchsorted_integrated --size 32768 --cpu")
+    compare_filtered("searchsorted_linear --size 32768 --cpu")
+    compare_filtered("searchsorted_binary --size 32768 --cpu")
+    compare_filtered("searchsorted_helper --size 32768 --cpu")
