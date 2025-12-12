@@ -124,6 +124,36 @@ pip install -e ".[dev]"
 python setup.py build_ext --inplace
 python -m unittest discover python/tests
 python setup.py generate_stubs  # optional
+
+### Virtual environment (recommended)
+
+Using a Python virtual environment keeps dependencies isolated and makes running the project's Python steps reproducible.
+
+- **Ensure `venv` is available:**
+  - On Debian/Ubuntu: `sudo apt-get install -y python3-venv`
+  - Verify: `python3 -m venv --help`
+
+- **Create and activate (bash/zsh):**
+  ```bash
+  python3 -m venv .venv
+  source .venv/bin/activate
+  python -m pip install --upgrade pip setuptools wheel
+  ```
+
+- **Install the project (examples):**
+  ```bash
+  pip install -e .[cpu]      # CPU-only editable install
+  pip install -e .[dev]      # Full dev install with test/dev deps
+  # For CUDA-enabled dev: CMAKE_ARGS="-DMLX_BUILD_CUDA=ON" pip install -e ".[dev]"
+  ```
+
+- **Run Python commands using the venv:**
+  - With venv activated: `python benchmarks/python/comparative/bench_mlx.py ...`
+  - Without activating: `.venv/bin/python benchmarks/python/comparative/bench_mlx.py ...`
+
+- **Deactivate:** `deactivate`
+
+Add these steps to your workflow when running Python tests, benchmarks, or installing the package locally.
 ```
 
 ---
