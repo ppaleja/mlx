@@ -601,23 +601,21 @@ void search_sorted(
     size_t a_offset = a_it.loc;
 
     const T* base_ptr = a_ptr + a_offset;
-    std::vector<T> axis_vals(axis_size);
-    auto axis_iter = StridedIterator<const T>(
-        base_ptr, static_cast<int64_t>(axis_stride), 0);
-    for (size_t k = 0; k < axis_size; ++k) {
-      axis_vals[k] = *axis_iter;
-      axis_iter += 1;
-    }
+
+    // Use strided iterators directly to avoid per-output heap allocation and
+    // copying of the axis slice.
+    StridedIterator<const T> axis_begin(
+        const_cast<T*>(base_ptr), static_cast<int64_t>(axis_stride), 0);
+    StridedIterator<const T> axis_end(
+        const_cast<T*>(base_ptr), static_cast<int64_t>(axis_stride), axis_size);
 
     IdxT idx;
     if (right) {
-      auto it = std::upper_bound(
-          axis_vals.begin(), axis_vals.end(), val, nan_aware_less<T>);
-      idx = static_cast<IdxT>(std::distance(axis_vals.begin(), it));
+      auto it = std::upper_bound(axis_begin, axis_end, val, nan_aware_less<T>);
+      idx = static_cast<IdxT>(it - axis_begin);
     } else {
-      auto it = std::lower_bound(
-          axis_vals.begin(), axis_vals.end(), val, nan_aware_less<T>);
-      idx = static_cast<IdxT>(std::distance(axis_vals.begin(), it));
+      auto it = std::lower_bound(axis_begin, axis_end, val, nan_aware_less<T>);
+      idx = static_cast<IdxT>(it - axis_begin);
     }
     out_ptr[i] = idx;
 
