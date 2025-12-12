@@ -28,6 +28,9 @@ bool nan_aware_less(T a, T b) {
   return a < b;
 }
 
+// Threshold for switching to linear scan for small axis sizes
+constexpr size_t SMALL_LINEAR_THRESHOLD = 32;
+
 template <typename T>
 struct StridedIterator {
   using iterator_category = std::random_access_iterator_tag;
@@ -545,13 +548,34 @@ void search_sorted(
       T val = v_ptr[i];
 
       IdxT idx;
-      if (right) {
-        auto it = std::upper_bound(axis_begin, axis_end, val, nan_aware_less<T>);
-        idx = static_cast<IdxT>(it - axis_begin);
+
+      // Small arrays: linear scan is often faster due to better cache
+      if (axis_size <= SMALL_LINEAR_THRESHOLD) {
+        if (right) {
+          size_t j = 0;
+          for (; j < axis_size; ++j) {
+            if (nan_aware_less<T>(val, axis_begin[j]))
+              break;
+          }
+          idx = static_cast<IdxT>(j);
+        } else {
+          size_t j = 0;
+          for (; j < axis_size; ++j) {
+            if (!nan_aware_less<T>(axis_begin[j], val))
+              break;
+          }
+          idx = static_cast<IdxT>(j);
+        }
       } else {
-        auto it = std::lower_bound(axis_begin, axis_end, val, nan_aware_less<T>);
-        idx = static_cast<IdxT>(it - axis_begin);
+        if (right) {
+          auto it = std::upper_bound(axis_begin, axis_end, val, nan_aware_less<T>);
+          idx = static_cast<IdxT>(it - axis_begin);
+        } else {
+          auto it = std::lower_bound(axis_begin, axis_end, val, nan_aware_less<T>);
+          idx = static_cast<IdxT>(it - axis_begin);
+        }
       }
+
       out_ptr[i] = idx;
     }
     return;
@@ -610,12 +634,34 @@ void search_sorted(
         const_cast<T*>(base_ptr), static_cast<int64_t>(axis_stride), axis_size);
 
     IdxT idx;
-    if (right) {
-      auto it = std::upper_bound(axis_begin, axis_end, val, nan_aware_less<T>);
-      idx = static_cast<IdxT>(it - axis_begin);
+
+    // Small arrays: use linear scan over strided axis
+    if (axis_size <= SMALL_LINEAR_THRESHOLD) {
+      if (right) {
+        size_t j = 0;
+        for (; j < axis_size; ++j) {
+          const T& aelem = axis_begin[j];
+          if (nan_aware_less<T>(val, aelem))
+            break;
+        }
+        idx = static_cast<IdxT>(j);
+      } else {
+        size_t j = 0;
+        for (; j < axis_size; ++j) {
+          const T& aelem = axis_begin[j];
+          if (!nan_aware_less<T>(aelem, val))
+            break;
+        }
+        idx = static_cast<IdxT>(j);
+      }
     } else {
-      auto it = std::lower_bound(axis_begin, axis_end, val, nan_aware_less<T>);
-      idx = static_cast<IdxT>(it - axis_begin);
+      if (right) {
+        auto it = std::upper_bound(axis_begin, axis_end, val, nan_aware_less<T>);
+        idx = static_cast<IdxT>(it - axis_begin);
+      } else {
+        auto it = std::lower_bound(axis_begin, axis_end, val, nan_aware_less<T>);
+        idx = static_cast<IdxT>(it - axis_begin);
+      }
     }
     out_ptr[i] = idx;
 
