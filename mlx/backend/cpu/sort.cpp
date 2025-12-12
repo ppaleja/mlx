@@ -30,6 +30,8 @@ bool nan_aware_less(T a, T b) {
 
 // Threshold for switching to linear scan for small axis sizes
 constexpr size_t SMALL_LINEAR_THRESHOLD = 32;
+// Threshold for using exponential search for large axis sizes
+constexpr size_t LARGE_EXP_THRESHOLD = 10000;
 
 template <typename T>
 struct StridedIterator {
@@ -566,12 +568,40 @@ void search_sorted(
           }
           idx = static_cast<IdxT>(j);
         }
-      } else {
+      } else if (axis_size > LARGE_EXP_THRESHOLD) {
+        // Large arrays: exponential search to reduce binary-search range
+        size_t bound = 1;
         if (right) {
-          auto it = std::upper_bound(axis_begin, axis_end, val, nan_aware_less<T>);
+          // Expand while value >= a[bound]
+          while (bound < axis_size &&
+                 !nan_aware_less<T>(val, axis_begin[bound]))
+            bound <<= 1;
+        } else {
+          // Expand while a[bound] < value
+          while (bound < axis_size && nan_aware_less<T>(axis_begin[bound], val))
+            bound <<= 1;
+        }
+
+        size_t left = bound >> 1;
+        size_t rightb = std::min(bound, axis_size);
+
+        if (right) {
+          auto it = std::upper_bound(
+              axis_begin + left, axis_begin + rightb, val, nan_aware_less<T>);
           idx = static_cast<IdxT>(it - axis_begin);
         } else {
-          auto it = std::lower_bound(axis_begin, axis_end, val, nan_aware_less<T>);
+          auto it = std::lower_bound(
+              axis_begin + left, axis_begin + rightb, val, nan_aware_less<T>);
+          idx = static_cast<IdxT>(it - axis_begin);
+        }
+      } else {
+        if (right) {
+          auto it =
+              std::upper_bound(axis_begin, axis_end, val, nan_aware_less<T>);
+          idx = static_cast<IdxT>(it - axis_begin);
+        } else {
+          auto it =
+              std::lower_bound(axis_begin, axis_end, val, nan_aware_less<T>);
           idx = static_cast<IdxT>(it - axis_begin);
         }
       }
@@ -654,12 +684,37 @@ void search_sorted(
         }
         idx = static_cast<IdxT>(j);
       }
-    } else {
+    } else if (axis_size > LARGE_EXP_THRESHOLD) {
+      // Large arrays: exponential search over strided axis
+      size_t bound = 1;
       if (right) {
-        auto it = std::upper_bound(axis_begin, axis_end, val, nan_aware_less<T>);
+        while (bound < axis_size && !nan_aware_less<T>(val, axis_begin[bound]))
+          bound <<= 1;
+      } else {
+        while (bound < axis_size && nan_aware_less<T>(axis_begin[bound], val))
+          bound <<= 1;
+      }
+
+      size_t left = bound >> 1;
+      size_t rightb = std::min(bound, axis_size);
+
+      if (right) {
+        auto it = std::upper_bound(
+            axis_begin + left, axis_begin + rightb, val, nan_aware_less<T>);
         idx = static_cast<IdxT>(it - axis_begin);
       } else {
-        auto it = std::lower_bound(axis_begin, axis_end, val, nan_aware_less<T>);
+        auto it = std::lower_bound(
+            axis_begin + left, axis_begin + rightb, val, nan_aware_less<T>);
+        idx = static_cast<IdxT>(it - axis_begin);
+      }
+    } else {
+      if (right) {
+        auto it =
+            std::upper_bound(axis_begin, axis_end, val, nan_aware_less<T>);
+        idx = static_cast<IdxT>(it - axis_begin);
+      } else {
+        auto it =
+            std::lower_bound(axis_begin, axis_end, val, nan_aware_less<T>);
         idx = static_cast<IdxT>(it - axis_begin);
       }
     }
