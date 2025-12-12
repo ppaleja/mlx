@@ -532,6 +532,31 @@ void search_sorted(
   size_t axis_size = a.shape(axis);
   a_strides.erase(a_strides.begin() + axis);
 
+  // Contiguous fast-path: when `a` is fully contiguous, the axis has unit
+  // stride (innermost dimension), `v` is contiguous and there is a 1:1
+  // correspondence between output elements and rows of `a` (no broadcasting).
+  // This avoids per-output allocation/copy and strided iterator overhead.
+  if (a.flags().contiguous && axis_stride == 1 && v.flags().contiguous &&
+      a.size() == out.size() * axis_size && v.size() == out.size()) {
+    for (size_t i = 0; i < out.size(); ++i) {
+      const T* axis_begin = a_ptr + i * axis_size;
+      const T* axis_end = axis_begin + axis_size;
+
+      T val = v_ptr[i];
+
+      IdxT idx;
+      if (right) {
+        auto it = std::upper_bound(axis_begin, axis_end, val, nan_aware_less<T>);
+        idx = static_cast<IdxT>(it - axis_begin);
+      } else {
+        auto it = std::lower_bound(axis_begin, axis_end, val, nan_aware_less<T>);
+        idx = static_cast<IdxT>(it - axis_begin);
+      }
+      out_ptr[i] = idx;
+    }
+    return;
+  }
+
   Strides a_broadcast_strides(common_shape.size(), 0);
   Strides v_broadcast_strides(common_shape.size(), 0);
 
