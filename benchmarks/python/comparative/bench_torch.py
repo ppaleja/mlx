@@ -305,50 +305,28 @@ def searchsorted(a, v, side="left"):
 
 @torch.no_grad()
 def searchsorted_linear(a, v, side="left"):
+    # Use torch.searchsorted for comparison; no naive implementation.
     ys = []
     for _ in range(10):
-        a_row = a.unsqueeze(0)
-        v_col = v.unsqueeze(1)
-        if side == "left":
-            mask = a_row < v_col
-        else:
-            mask = a_row <= v_col
-        idx = mask.sum(dim=1)
-        ys.append(idx)
+        ys.append(torch.searchsorted(a, v, right=(side == "right")))
     sync_if_needed(a)
 
 
 @torch.no_grad()
 def searchsorted_binary(a, v, side="left"):
+    # Use torch.searchsorted for comparison; no naive implementation.
     ys = []
     for _ in range(10):
-        N = int(a.shape[-1])
-        M = int(v.shape[0])
-        lo = torch.zeros((M,), dtype=torch.long, device=a.device)
-        hi = torch.full((M,), N, dtype=torch.long, device=a.device)
-        loops = (N + 1).bit_length()
-        for _ in range(loops):
-            mid = (lo + hi) // 2
-            mid_idx = mid.unsqueeze(1)
-            mid_val = torch.take_along_dim(a.unsqueeze(0), mid_idx, dim=1).squeeze(1)
-            if side == "left":
-                cmp = mid_val < v
-            else:
-                cmp = mid_val <= v
-            lo = torch.where(cmp, mid + 1, lo)
-            hi = torch.where(cmp, hi, mid)
-        ys.append(lo)
+        ys.append(torch.searchsorted(a, v, right=(side == "right")))
     sync_if_needed(a)
 
 
 @torch.no_grad()
 def searchsorted_helper(a, v, side="left"):
+    # Use torch.searchsorted for comparison; no helper implementation.
     ys = []
     for _ in range(10):
-        a_np = a.cpu().numpy()
-        v_np = v.cpu().numpy()
-        idx_np = np.searchsorted(a_np, v_np, side=side)
-        ys.append(torch.from_numpy(idx_np).to(a.device))
+        ys.append(torch.searchsorted(a, v, right=(side == "right")))
     sync_if_needed(a)
 
 
