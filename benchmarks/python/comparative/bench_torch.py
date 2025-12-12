@@ -4,6 +4,7 @@ import argparse
 import os
 import time
 
+import numpy as np
 import torch
 import torch.cuda
 import torch.mps
@@ -295,6 +296,41 @@ def topk(axis, x):
 
 
 @torch.no_grad()
+def searchsorted(a, v, side="left"):
+    ys = []
+    for i in range(10):
+        ys.append(torch.searchsorted(a, v, right=(side == "right")))
+    sync_if_needed(a)
+
+
+@torch.no_grad()
+def searchsorted_linear(a, v, side="left"):
+    # Use torch.searchsorted for comparison; no naive implementation.
+    ys = []
+    for _ in range(10):
+        ys.append(torch.searchsorted(a, v, right=(side == "right")))
+    sync_if_needed(a)
+
+
+@torch.no_grad()
+def searchsorted_binary(a, v, side="left"):
+    # Use torch.searchsorted for comparison; no naive implementation.
+    ys = []
+    for _ in range(10):
+        ys.append(torch.searchsorted(a, v, right=(side == "right")))
+    sync_if_needed(a)
+
+
+@torch.no_grad()
+def searchsorted_helper(a, v, side="left"):
+    # Use torch.searchsorted for comparison; no helper implementation.
+    ys = []
+    for _ in range(10):
+        ys.append(torch.searchsorted(a, v, right=(side == "right")))
+    sync_if_needed(a)
+
+
+@torch.no_grad()
 def step_function(x):
     y = x
     for i in range(100):
@@ -477,6 +513,57 @@ if __name__ == "__main__":
 
     elif args.benchmark == "sum_and_add":
         print(bench(sum_and_add, axis, *xs))
+
+    elif args.benchmark == "searchsorted":
+        # searchsorted expects sorted array and values to search
+        a = torch.sort(x, dim=-1)[0]
+        v = torch.rand(
+            (x.shape[0] if len(x.shape) > 1 else 100,), device=x.device, dtype=x.dtype
+        )
+        side = "left"  # default
+        if hasattr(args, "side"):
+            side = args.side
+        print(bench(searchsorted, a, v, side))
+
+    elif args.benchmark == "searchsorted_integrated":
+        a = torch.sort(x, dim=-1)[0]
+        v = torch.rand(
+            (x.shape[0] if len(x.shape) > 1 else 100,), device=x.device, dtype=x.dtype
+        )
+        side = "left"
+        if hasattr(args, "side"):
+            side = args.side
+        print(bench(searchsorted, a, v, side))
+
+    elif args.benchmark == "searchsorted_linear":
+        a = torch.sort(x, dim=-1)[0]
+        v = torch.rand(
+            (x.shape[0] if len(x.shape) > 1 else 100,), device=x.device, dtype=x.dtype
+        )
+        side = "left"
+        if hasattr(args, "side"):
+            side = args.side
+        print(bench(searchsorted_linear, a, v, side))
+
+    elif args.benchmark == "searchsorted_binary":
+        a = torch.sort(x, dim=-1)[0]
+        v = torch.rand(
+            (x.shape[0] if len(x.shape) > 1 else 100,), device=x.device, dtype=x.dtype
+        )
+        side = "left"
+        if hasattr(args, "side"):
+            side = args.side
+        print(bench(searchsorted_binary, a, v, side))
+
+    elif args.benchmark == "searchsorted_helper":
+        a = torch.sort(x, dim=-1)[0]
+        v = torch.rand(
+            (x.shape[0] if len(x.shape) > 1 else 100,), device=x.device, dtype=x.dtype
+        )
+        side = "left"
+        if hasattr(args, "side"):
+            side = args.side
+        print(bench(searchsorted_helper, a, v, side))
 
     else:
         raise ValueError(f"Unknown benchmark `{args.benchmark}`.")

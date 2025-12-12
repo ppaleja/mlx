@@ -8,6 +8,7 @@ from functools import partial
 
 import mlx.core as mx
 import mlx.nn as nn
+import numpy as np
 
 
 def int_or_list(x):
@@ -347,6 +348,53 @@ def selu(x):
     mx.eval(y)
 
 
+def searchsorted_integrated(a, v, side="left"):
+    ys = []
+    for i in range(10):
+        ys.append(mx.searchsorted(a, v, side=side))
+    mx.eval(ys)
+
+
+def searchsorted_linear(a, v, side="left"):
+    # vectorized linear search: count elements < v (or <= for right)
+    ys = []
+    for _ in range(10):
+        a_row = mx.reshape(a, (1, -1))
+        v_col = mx.reshape(v, (-1, 1))
+        if side == "left":
+            mask = a_row < v_col
+        else:
+            mask = a_row <= v_col
+        idx = mx.sum(mask, axis=1)
+        ys.append(idx)
+    mx.eval(ys)
+
+
+def searchsorted_binary(a, v, side="left"):
+    # vectorized binary search using take_along_axis
+    ys = []
+    for _ in range(10):
+        N = int(a.shape[-1])
+        M = int(v.shape[0])
+        lo = mx.zeros((M,), dtype=mx.uint32)
+        hi = mx.full((M,), N, dtype=mx.uint32)
+        # iterate log2(N) times
+        loops = math.ceil(math.log2(N + 1))
+        for _ in range(loops):
+            mid = (lo + hi) // 2
+            mid_idx = mx.reshape(mid, (-1, 1))
+            mid_val = mx.take_along_axis(mx.reshape(a, (1, -1)), mid_idx, axis=1)
+            mid_val = mx.reshape(mid_val, (-1,))
+            if side == "left":
+                cmp = mid_val < v
+            else:
+                cmp = mid_val <= v
+            lo = mx.where(cmp, mid + 1, lo)
+            hi = mx.where(cmp, hi, mid)
+        ys.append(lo)
+    mx.eval(ys)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("benchmark", help="Choose the benchmark to run")
@@ -514,6 +562,30 @@ if __name__ == "__main__":
 
     elif args.benchmark == "sum_and_add":
         print(bench(sum_and_add, axis, *xs))
+
+    elif args.benchmark == "searchsorted_integrated":
+        a = mx.sort(x, axis=-1)
+        v = mx.random.uniform(shape=(x.shape[0] if len(x.shape) > 1 else 100,))
+        side = "left"
+        if hasattr(args, "side"):
+            side = args.side
+        print(bench(searchsorted_integrated, a, v, side))
+
+    elif args.benchmark == "searchsorted_linear":
+        a = mx.sort(x, axis=-1)
+        v = mx.random.uniform(shape=(x.shape[0] if len(x.shape) > 1 else 100,))
+        side = "left"
+        if hasattr(args, "side"):
+            side = args.side
+        print(bench(searchsorted_linear, a, v, side))
+
+    elif args.benchmark == "searchsorted_binary":
+        a = mx.sort(x, axis=-1)
+        v = mx.random.uniform(shape=(x.shape[0] if len(x.shape) > 1 else 100,))
+        side = "left"
+        if hasattr(args, "side"):
+            side = args.side
+        print(bench(searchsorted_binary, a, v, side))
 
     else:
         raise ValueError("Unknown benchmark")
