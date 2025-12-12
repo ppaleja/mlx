@@ -659,9 +659,9 @@ void search_sorted(
     // Use strided iterators directly to avoid per-output heap allocation and
     // copying of the axis slice.
     StridedIterator<const T> axis_begin(
-        const_cast<T*>(base_ptr), static_cast<int64_t>(axis_stride), 0);
+        base_ptr, static_cast<int64_t>(axis_stride), 0);
     StridedIterator<const T> axis_end(
-        const_cast<T*>(base_ptr), static_cast<int64_t>(axis_stride), axis_size);
+        base_ptr, static_cast<int64_t>(axis_stride), axis_size);
 
     IdxT idx;
 
