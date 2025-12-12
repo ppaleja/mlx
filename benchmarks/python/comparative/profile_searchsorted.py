@@ -15,10 +15,10 @@ python benchmarks/python/comparative/profile_searchsorted.py --mode wait --a-siz
 """
 
 import argparse
-import time
 import cProfile
 import pstats
 import sys
+import time
 
 import numpy as np
 
@@ -47,15 +47,18 @@ def time_fn(fn, iters=10):
 def run_integrated(a_np, v_np, side="left"):
     a = mx.array(a_np)
     v = mx.array(v_np)
+
     def _run():
         out = mx.searchsorted(a, v, side=side)
         mx.eval(out)
+
     return _run
 
 
 def run_linear(a_np, v_np, side="left"):
     a = mx.array(a_np)
     v = mx.array(v_np)
+
     def _run():
         a_row = mx.reshape(a, (1, -1))
         v_col = mx.reshape(v, (-1, 1))
@@ -65,12 +68,14 @@ def run_linear(a_np, v_np, side="left"):
             mask = a_row <= v_col
         idx = mx.sum(mask, axis=1)
         mx.eval(idx)
+
     return _run
 
 
 def run_binary(a_np, v_np, side="left"):
     a = mx.array(a_np)
     v = mx.array(v_np)
+
     def _run():
         N = int(a.shape[-1])
         M = int(v.shape[0])
@@ -89,6 +94,7 @@ def run_binary(a_np, v_np, side="left"):
             lo = mx.where(cmp, mid + 1, lo)
             hi = mx.where(cmp, hi, mid)
         mx.eval(lo)
+
     return _run
 
 
@@ -99,7 +105,9 @@ def main():
     parser.add_argument("--v-size", type=int, default=1000)
     parser.add_argument("--iters", type=int, default=10)
     parser.add_argument("--side", choices=["left", "right"], default="left")
-    parser.add_argument("--out", type=str, default="stats.prof", help="cProfile output file")
+    parser.add_argument(
+        "--out", type=str, default="stats.prof", help="cProfile output file"
+    )
     args = parser.parse_args()
 
     if mx is None:
@@ -127,13 +135,18 @@ def main():
         integrated()
         pr.disable()
         pr.dump_stats(args.out)
-        print(f"Wrote cProfile stats to {args.out}. Use 'python -m pstats {args.out}' to view.")
+        print(
+            f"Wrote cProfile stats to {args.out}. Use 'python -m pstats {args.out}' to view."
+        )
 
     elif args.mode == "wait":
         # Print PID so user can attach perf or other native profilers.
         import os
+
         pid = os.getpid()
-        print(f"PID: {pid}. Attach your profiler now (e.g. 'perf record -p {pid} -g'), then press Enter to continue.")
+        print(
+            f"PID: {pid}. Attach your profiler now (e.g. 'perf record -p {pid} -g'), then press Enter to continue."
+        )
         input()
         # After attaching, run a few iterations to capture native-level activity
         t = time_fn(integrated, iters=args.iters)

@@ -1,5 +1,7 @@
 import argparse
+
 import numpy as np
+
 from .time_utils import time_fn
 
 
@@ -31,8 +33,12 @@ def main():
     parser = argparse.ArgumentParser(description="Benchmark NumPy searchsorted")
     parser.add_argument("--side", choices=["left", "right"], default="left")
     parser.add_argument("--dtype", choices=["float32", "float64"], default="float32")
-    parser.add_argument("--a-sizes", type=int, nargs="*", default=[1_000, 10_000, 100_000, 1_000_000])
-    parser.add_argument("--v-sizes", type=int, nargs="*", default=[10, 100, 1_000, 1_000])
+    parser.add_argument(
+        "--a-sizes", type=int, nargs="*", default=[1_000, 10_000, 100_000, 1_000_000]
+    )
+    parser.add_argument(
+        "--v-sizes", type=int, nargs="*", default=[10, 100, 1_000, 1_000]
+    )
     args = parser.parse_args()
 
     dtype = np.float32 if args.dtype == "float32" else np.float64

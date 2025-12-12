@@ -4,11 +4,11 @@ import argparse
 import math
 import os
 import time
-import numpy as np
 from functools import partial
 
 import mlx.core as mx
 import mlx.nn as nn
+import numpy as np
 
 
 def int_or_list(x):
@@ -395,8 +395,6 @@ def searchsorted_binary(a, v, side="left"):
     mx.eval(ys)
 
 
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("benchmark", help="Choose the benchmark to run")
@@ -588,7 +586,6 @@ if __name__ == "__main__":
         if hasattr(args, "side"):
             side = args.side
         print(bench(searchsorted_binary, a, v, side))
-
 
     else:
         raise ValueError("Unknown benchmark")

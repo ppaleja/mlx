@@ -4,8 +4,8 @@ import argparse
 import os
 import time
 
-import torch
 import numpy as np
+import torch
 import torch.cuda
 import torch.mps
 
@@ -517,15 +517,19 @@ if __name__ == "__main__":
     elif args.benchmark == "searchsorted":
         # searchsorted expects sorted array and values to search
         a = torch.sort(x, dim=-1)[0]
-        v = torch.rand((x.shape[0] if len(x.shape) > 1 else 100,), device=x.device, dtype=x.dtype)
+        v = torch.rand(
+            (x.shape[0] if len(x.shape) > 1 else 100,), device=x.device, dtype=x.dtype
+        )
         side = "left"  # default
         if hasattr(args, "side"):
             side = args.side
         print(bench(searchsorted, a, v, side))
- 
+
     elif args.benchmark == "searchsorted_integrated":
         a = torch.sort(x, dim=-1)[0]
-        v = torch.rand((x.shape[0] if len(x.shape) > 1 else 100,), device=x.device, dtype=x.dtype)
+        v = torch.rand(
+            (x.shape[0] if len(x.shape) > 1 else 100,), device=x.device, dtype=x.dtype
+        )
         side = "left"
         if hasattr(args, "side"):
             side = args.side
@@ -533,7 +537,9 @@ if __name__ == "__main__":
 
     elif args.benchmark == "searchsorted_linear":
         a = torch.sort(x, dim=-1)[0]
-        v = torch.rand((x.shape[0] if len(x.shape) > 1 else 100,), device=x.device, dtype=x.dtype)
+        v = torch.rand(
+            (x.shape[0] if len(x.shape) > 1 else 100,), device=x.device, dtype=x.dtype
+        )
         side = "left"
         if hasattr(args, "side"):
             side = args.side
@@ -541,7 +547,9 @@ if __name__ == "__main__":
 
     elif args.benchmark == "searchsorted_binary":
         a = torch.sort(x, dim=-1)[0]
-        v = torch.rand((x.shape[0] if len(x.shape) > 1 else 100,), device=x.device, dtype=x.dtype)
+        v = torch.rand(
+            (x.shape[0] if len(x.shape) > 1 else 100,), device=x.device, dtype=x.dtype
+        )
         side = "left"
         if hasattr(args, "side"):
             side = args.side
@@ -549,7 +557,9 @@ if __name__ == "__main__":
 
     elif args.benchmark == "searchsorted_helper":
         a = torch.sort(x, dim=-1)[0]
-        v = torch.rand((x.shape[0] if len(x.shape) > 1 else 100,), device=x.device, dtype=x.dtype)
+        v = torch.rand(
+            (x.shape[0] if len(x.shape) > 1 else 100,), device=x.device, dtype=x.dtype
+        )
         side = "left"
         if hasattr(args, "side"):
             side = args.side

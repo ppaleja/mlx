@@ -1,11 +1,13 @@
 import argparse
 import time
+
 import numpy as np
 
 try:
     import mlx.core as mx
 except Exception as e:
     mx = None
+
 
 def time_fn(fn, iters: int = 10):
     # Simple timing helper: run fn() iters times and return average seconds
@@ -69,11 +71,17 @@ def fmt_results(tag, results):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Benchmark searchsorted for MLX vs NumPy")
+    parser = argparse.ArgumentParser(
+        description="Benchmark searchsorted for MLX vs NumPy"
+    )
     parser.add_argument("--side", choices=["left", "right"], default="left")
     parser.add_argument("--dtype", choices=["float32", "float64"], default="float32")
-    parser.add_argument("--a-sizes", type=int, nargs="*", default=[1_000, 10_000, 100_000, 1_000_000])
-    parser.add_argument("--v-sizes", type=int, nargs="*", default=[10, 100, 1_000, 10_000])
+    parser.add_argument(
+        "--a-sizes", type=int, nargs="*", default=[1_000, 10_000, 100_000, 1_000_000]
+    )
+    parser.add_argument(
+        "--v-sizes", type=int, nargs="*", default=[10, 100, 1_000, 10_000]
+    )
     args = parser.parse_args()
 
     dtype = np.float32 if args.dtype == "float32" else np.float64
