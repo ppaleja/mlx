@@ -5,6 +5,7 @@
 #include "mlx/dtype_utils.h"
 
 #include <fmt/format.h>
+#include <vector>
 
 namespace mlx::core {
 
@@ -28,6 +29,13 @@ void check_cuda_error(const char* name, CUresult err) {
     const char* err_str = "Unknown error";
     cuGetErrorString(err, &err_str);
     throw std::runtime_error(fmt::format("{} failed: {}", name, err_str));
+  }
+}
+
+void check_cudnn_error(const char* name, cudnnStatus_t err) {
+  if (err != CUDNN_STATUS_SUCCESS) {
+    throw std::runtime_error(
+        fmt::format("{} failed: {}.", name, cudnnGetErrorString(err)));
   }
 }
 
@@ -72,7 +80,6 @@ CudaGraph::CudaGraph(cu::Device& device) {
 }
 
 void CudaGraph::end_capture(cudaStream_t stream) {
-  assert(handle_ == nullptr);
   CHECK_CUDA_ERROR(cudaStreamEndCapture(stream, &handle_));
 }
 
