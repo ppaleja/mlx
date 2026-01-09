@@ -685,7 +685,7 @@ std::pair<std::vector<array>, std::vector<int>> SearchSorted::vmap(
   if (to_ax != -1 && to_ax <= axis) {
     axis++;
   }
-  return {{searchsorted(a, v, right_, axis, stream())}, {to_ax}};
+  return {{searchsorted(a, v, axis, right_, stream())}, {to_ax}};
 }
 
 std::pair<std::vector<array>, std::vector<int>> ArgSort::vmap(

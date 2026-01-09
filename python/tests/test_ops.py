@@ -2371,8 +2371,7 @@ class TestOps(mlx_tests.MLXTestCase):
         # Test output dtype is integer
         a_mx = mx.array([1.0, 2.0, 3.0, 4.0, 5.0])
         result = mx.searchsorted(a_mx, mx.array([2.5, 4.5]))
-        self.assertTrue(result.dtype in [mx.int32, mx.int64, mx.uint32, mx.uint64])
-
+        self.assertIn(result.dtype, [mx.int32, mx.int64, mx.uint32, mx.uint64])
         # Test large array
         a_mx = mx.arange(10000)
         v_mx = mx.array([100, 5000, 9999])

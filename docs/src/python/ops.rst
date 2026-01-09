@@ -145,9 +145,9 @@ Operations
    savez
    savez_compressed
    save_gguf
-save_safetensors
-searchsorted
-sigmoid
+   save_safetensors
+   searchsorted
+   sigmoid
    sign
    sin
    sinh
